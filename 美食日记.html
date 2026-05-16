@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍽️ 今天吃了什么</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ffecd2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.5em;
+  color: #5d4037;
+  margin: 30px 0 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.subtitle {
+  text-align: center;
+  color: #795548;
+  font-size: 1.1em;
+  margin-bottom: 30px;
+}
+
+.upload-card {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.upload-area {
+  border: 3px dashed #e0c0a8;
+  border-radius: 16px;
+  padding: 40px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fffaf5;
+}
+
+.upload-area:hover {
+  border-color: #fcb69f;
+  background: #fff5ec;
+  transform: scale(1.01);
+}
+
+.upload-area.dragover {
+  border-color: #ff8a65;
+  background: #fff3e0;
+  box-shadow: 0 0 20px rgba(255,138,101,0.2);
+}
+
+.upload-icon {
+  font-size: 3em;
+  margin-bottom: 10px;
+}
+
+.upload-text {
+  color: #795548;
+  font-size: 1.1em;
+  margin-bottom: 5px;
+}
+
+.upload-hint {
+  color: #bcaaa4;
+  font-size: 0.85em;
+}
+
+/* 食物分类标签 */
+.categories {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+  justify-content: center;
+}
+
+.category-tag {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 2px solid #e0c0a8;
+  background: white;
+  color: #795548;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.3s;
+}
+
+.category-tag:hover, .category-tag.active {
+  background: #fcb69f;
+  border-color: #fcb69f;
+  color: white;
+}
+
+/* 食物卡片列表 */
+.food-list {
+  display: grid;
+  gap: 15px;
+}
+
+.food-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.food-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.food-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  display: block;
+}
+
+.card-info {
+  padding: 15px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-time {
+  color: #8d6e63;
+  font-size: 0.9em;
+}
+
+.card-tag {
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.tag-breakfast { background: #ffe0b2; color: #e65100; }
+.tag-lunch { background: #c8e6c9; color: #2e7d32; }
+.tag-dinner { background: #ffccbc; color: #bf360c; }
+.tag-snack { background: #e1bee7; color: #6a1b9a; }
+.tag-dessert { background: #f8bbd0; color: #880e4f; }
+.tag-drink { background: #b3e5fc; color: #01579b; }
+
+.card-delete {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 1.2em;
+  padding: 4px 8px;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.card-delete:hover {
+  color: #e53935;
+  background: #ffebee;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.empty-icon {
+  font-size: 4em;
+  margin-bottom: 15px;
+  opacity: 0.6;
+}
+
+.empty-state p {
+  color: #a1887f;
+  font-size: 1.1em;
+}
+
+.footer {
+  text-align: center;
+  padding: 30px;
+  color: #a1887f;
+  font-size: 0.85em;
+}
+
+input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🍽️ 今天吃了什么</h1>
+  <p class="subtitle">记录每一顿美食，分享你的今日菜单</p>
+
+  <!-- 上传区域 -->
+  <div class="upload-card">
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">📷</div>
+      <div class="upload-text">点击上传或拖拽图片到这里</div>
+      <div class="upload-hint">支持 JPG、PNG、GIF、WebP 格式</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+
+    <!-- 分类标签 -->
+    <div class="categories" id="categories">
+      <span class="category-tag active" data-tag="breakfast">🌅 早餐</span>
+      <span class="category-tag" data-tag="lunch">☀️ 午餐</span>
+      <span class="category-tag" data-tag="dinner">🌙 晚餐</span>
+      <span class="category-tag" data-tag="snack">🍿 零食</span>
+      <span class="category-tag" data-tag="dessert">🍰 甜点</span>
+      <span class="category-tag" data-tag="drink">🥤 饮品</span>
+    </div>
+  </div>
+
+  <!-- 食物展示区 -->
+  <div class="food-list" id="foodList">
+    <div class="empty-state">
+      <div class="empty-icon">🍜</div>
+      <p>还没有记录呢，快来上传你今天的美食吧！</p>
+    </div>
+  </div>
+
+  <div class="footer">💡 所有数据保存在本地浏览器中，不会上传到任何服务器</div>
+</div>
+
+<script>
+let currentTag = 'breakfast';
+let foodItems = JSON.parse(localStorage.getItem('foodDiary') || '[]');
+
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const foodList = document.getElementById('foodList');
+const categories = document.getElementById('categories');
+
+// 分类选择
+categories.addEventListener('click', (e) => {
+  if (e.target.classList.contains('category-tag')) {
+    document.querySelectorAll('.category-tag').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    currentTag = e.target.dataset.tag;
+  }
+});
+
+// 点击上传
+uploadArea.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+// 拖拽上传
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dateStr = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
+
+      foodItems.unshift({
+        id: Date.now() + Math.random(),
+        src: e.target.result,
+        time: dateStr + ' ' + timeStr,
+        tag: currentTag
+      });
+
+      saveAndRender();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  fileInput.value = '';
+}
+
+function deleteFood(id) {
+  foodItems = foodItems.filter(item => item.id !== id);
+  saveAndRender();
+}
+
+function saveAndRender() {
+  localStorage.setItem('foodDiary', JSON.stringify(foodItems));
+  render();
+}
+
+function getTagInfo(tag) {
+  const map = {
+    breakfast: { label: '🌅 早餐', cls: 'tag-breakfast' },
+    lunch: { label: '☀️ 午餐', cls: 'tag-lunch' },
+    dinner: { label: '🌙 晚餐', cls: 'tag-dinner' },
+    snack: { label: '🍿 零食', cls: 'tag-snack' },
+    dessert: { label: '🍰 甜点', cls: 'tag-dessert' },
+    drink: { label: '🥤 饮品', cls: 'tag-drink' }
+  };
+  return map[tag] || map.breakfast;
+}
+
+function render() {
+  if (foodItems.length === 0) {
+    foodList.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🍜</div>
+        <p>还没有记录呢，快来上传你今天的美食吧！</p>
+      </div>`;
+    return;
+  }
+
+  foodList.innerHTML = foodItems.map(item => {
+    const tag = getTagInfo(item.tag);
+    return `
+      <div class="food-card">
+        <img src="${item.src}" alt="美食图片" loading="lazy">
+        <div class="card-info">
+          <span class="card-time">${item.time}</span>
+          <span class="card-tag ${tag.cls}">${tag.label}</span>
+          <button class="card-delete" onclick="deleteFood(${item.id})" title="删除">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+render();
+</script>
+
+</body>
+</html>
